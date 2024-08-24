@@ -1,0 +1,28 @@
+{
+  "name": "cropshot",
+  "version": "1.0.9",
+  "author": "Mashtullah Shavalullah <dmusuda@gmail.com>",
+  "description": "Tool for creating simple screenshots for websites.",
+  "browser_action": {
+    "default_icon": "icon/toolbar.png"
+  },
+  
+  "icons": {
+    "16": "icon/icon16.png",
+    "32": "icon/icon32.png",
+    "48": "icon/icon48.png",
+    "128": "icon/icon128.png"
+  },
+  "manifest_version": 2,
+  "background": {
+    "page": "background.html",
+    "persistent": true
+  },
+  "permissions": [
+    "tabs",
+	"clipboardRead",
+  "clipboardWrite",
+    "<all_urls>",
+	"activeTab"
+  ]
+}
