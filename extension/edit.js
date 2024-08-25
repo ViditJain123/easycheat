@@ -38,25 +38,49 @@ chrome.extension && chrome.extension.onMessage.addListener(function(image) {
 
 async function uploadImage(dataUrl) {
   try {
-    // Convert the Data URL to Blob
-    var blob = await dataURLtoBlob(dataUrl);
-    
-    // Prepare FormData for the POST request
-    var formData = new FormData();
+    // Convert data URL to Blob
+    const blob = await dataURLtoBlob(dataUrl);
+    const formData = new FormData();
     formData.append('profile', blob, 'image.png');
     
     // Send the image to the server
-    var response = await fetch(apiUrl, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       body: formData
     });
-    var result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const result = await response.json();
     console.log(result);
-    
-    if (result.success) {
+    const finalAnswer = result.answer;
+    const supAnswer = finalAnswer.replace(/[\*_]/g, '');
+    // Ensure the document is focused
+    if (!document.hasFocus()) {
+      // Focus the window if possible
+      window.open();
+      window.focus();
+      
+      // Alternatively, you could use window.open if in a popup context
+      // let newWindow = window.open('', '_self');
+      // newWindow.focus();
+    }
+
+    // Delay clipboard operation slightly to ensure the document is focused
+    setTimeout(async () => {
+      try {
+        await navigator.clipboard.writeText(supAnswer);
+        console.log('Result copied to clipboard');
+        window.close();
+      } catch (copyError) {
+        console.error('Failed to copy result to clipboard:', copyError);
+      }
+    }, 100); // 100ms delay
+
+    if (result.success === 1) {
       console.log('Image uploaded successfully');
-      // Optionally, you can open the URL of the uploaded image
-      window.open(result.profile_url);
     } else {
       console.error('Image upload failed:', result.message);
     }
@@ -64,6 +88,8 @@ async function uploadImage(dataUrl) {
     console.error('Error uploading image:', error);
   }
 }
+
+
 
 function dataURLtoBlob(dataURL) {
   var byteString = atob(dataURL.split(',')[1]);

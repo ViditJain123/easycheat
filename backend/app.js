@@ -12,6 +12,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const app = express();
 
+// Storage engine configuration
 const storage = multer.diskStorage({
   destination: "./upload/images",
   filename: (req, file, cb) => {
@@ -25,37 +26,42 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, 
+    fileSize: 10 * 1024 * 1024, // 10 MB file size
   },
 });
 
 app.use("/profile", express.static("upload/images"));
 
+// Route for file upload
 app.post("/upload", upload.single("profile"), async (req, res, next) => {
   const tempPath = path.join("./upload/images", req.file.filename);
 
   try {
+    // Perform OCR on the uploaded file
     const { data: { text } } = await T.recognize(tempPath, "eng");
     console.log("Extracted Text:", text);
 
+    // Generate content using the model
     const result = await model.generateContent(text);
     const response = result.response.text;
     const answer = response();
 
     console.log("Generated Answer:", answer);
 
+    // Send the extracted text and answer in the response
     res.json({
       success: 1,
       profile_url: `http://localhost:4000/profile/${req.file.filename}`,
-      extracted_text: text, 
-      answer: answer,       
+      extracted_text: text, // Include extracted text in the response
+      answer: answer,       // Include the generated answer in the response
     });
   } catch (err) {
     console.error(err);
-    next(err);
+    next(err); // Pass the error to the error handler
   }
 });
 
+// Error handler middleware
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     res.status(400).json({
