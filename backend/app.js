@@ -30,6 +30,10 @@ const upload = multer({
   },
 });
 
+app.use("/", (req,res)=>{
+  res.json({message:"Welcome to EasyCheat API"});
+})
+
 app.use("/profile", express.static("upload/images"));
 
 // Route for file upload
