@@ -1,12 +1,11 @@
 {
-  "name": "cropshot",
+  "name": "EasyCheat",
   "version": "1.0.9",
-  "author": "Mashtullah Shavalullah <dmusuda@gmail.com>",
-  "description": "Tool for creating simple screenshots for websites.",
+  "author": "Vidit Jain",
+  "description": "Tool for cheating in exams.",
   "browser_action": {
-    "default_icon": "icon/toolbar.png"
+    "default_icon": "favicon_io/favicon-16x16.png"
   },
-  
   "icons": {
     "16": "icon/icon16.png",
     "32": "icon/icon32.png",
