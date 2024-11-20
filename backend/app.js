@@ -4,13 +4,16 @@ const path = require("path");
 const fs = require("fs");
 const T = require("tesseract.js");
 const dotenv = require("dotenv");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { OpenAI } = require("openai");
+
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 const app = express();
+  
+// OpenAI API Initialization
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // Fetch the API key from .env
+});
 
 // Storage engine configuration
 const storage = multer.diskStorage({
@@ -40,12 +43,18 @@ app.post("/upload", upload.single("profile"), async (req, res, next) => {
     // Perform OCR on the uploaded file
     const { data: { text } } = await T.recognize(tempPath, "eng");
     console.log("Extracted Text:", text);
+    const instruction = "You are an expert in electrical machines. I will give you question to solve and you have to give just the final answer. I dont want all of the calculations that you do. I want final answer till 4 decimals. So please give me just the final answer. By that I mean if the final answer is 9.6565 your response should be just that. I dont want to have all the calculations in the response";
+    const inputText = `${instruction} ${text}`;
+    // Generate content using GPT-4 model
+    const response = await openai.chat.completions.create({
+      
+      model: "o1-preview",
+      messages: [
+        { role: "user", content: inputText },
+      ],
+    });
 
-    // Generate content using the model
-    const result = await model.generateContent(text);
-    const response = result.response.text;
-    const answer = response();
-
+    const answer = response.choices[0].message.content.trim();
     console.log("Generated Answer:", answer);
 
     // Send the extracted text and answer in the response
