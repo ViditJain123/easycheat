@@ -86,7 +86,7 @@ a {
   right:0px;
   }
 
-.mask    { background:rgba(0,0,0,.25); }
+.mask    { background:rgba(0,0,0,0); }
 
 #base    { opacity:1; }
 #cropped { z-index:15; } /* was zero*/
