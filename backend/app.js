@@ -2,17 +2,16 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const T = require("tesseract.js");
 const dotenv = require("dotenv");
 const { OpenAI } = require("openai");
 
 dotenv.config();
 
 const app = express();
-  
+
 // OpenAI API Initialization
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Fetch the API key from .env
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // Storage engine configuration
@@ -40,29 +39,47 @@ app.post("/upload", upload.single("profile"), async (req, res, next) => {
   const tempPath = path.join("./upload/images", req.file.filename);
 
   try {
-    // Perform OCR on the uploaded file
-    const { data: { text } } = await T.recognize(tempPath, "eng");
-    console.log("Extracted Text:", text);
-    const instruction = "You are an expert in electrical machines. I will give you question to solve and you have to give just the final answer. I dont want all of the calculations that you do. I want final answer till 4 decimals. So please give me just the final answer. By that I mean if the final answer is 9.6565 your response should be just that. I dont want to have all the calculations in the response";
-    const inputText = `${instruction} ${text}`;
-    // Generate content using GPT-4 model
+    // Read the image file and convert it to base64
+    const imageBuffer = fs.readFileSync(tempPath);
+    const base64Image = imageBuffer.toString("base64");
+
+    // Instruction prompt for the model
+    const instruction =
+      "You are an expert in chemistry. I will give an question in image which you have to solve. Give response.";
+    const inputText = `${instruction}`;
+
+    // Generate content using GPT model
     const response = await openai.chat.completions.create({
-      
-      model: "o1-preview",
+      model: "gpt-4o-2024-11-20",
       messages: [
-        { role: "user", content: inputText },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "You are an expert in chemistry. I will give an question in image which you have to solve. Give response.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/png;base64, ${base64Image}`
+              }
+            }
+          ],
+        },
       ],
+      max_tokens: 10000,
     });
 
     const answer = response.choices[0].message.content.trim();
     console.log("Generated Answer:", answer);
 
-    // Send the extracted text and answer in the response
+    // Send the Base64 image and answer in the response
     res.json({
       success: 1,
       profile_url: `http://localhost:4000/profile/${req.file.filename}`,
-      extracted_text: text, // Include extracted text in the response
-      answer: answer,       // Include the generated answer in the response
+      base64_image: base64Image,
+      answer: answer,
     });
   } catch (err) {
     console.error(err);
